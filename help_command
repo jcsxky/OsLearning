@@ -1,0 +1,22 @@
+dd if=boot.bin of=hd60M.img bs=512 count=55 seek=2 conv=notrunc
+nasm mbr.S -o mbr.bin
+nasm boot.S -o boot.bin
+dd if=mbr.bin of=hd60M.img bs=512 count=1 conv=notrunc
+./bochs -f BochsConfig
+
+gcc -nostdlib -m32 kernel.c -e main -o kernel -Ttext 0x10
+objdump -d kernel
+dd if=kernel/kernel of=hd60M.img bs=512 count=250 seek=32 conv=notrunc
+
+sudo apt-get install build-essential module-assistant
+sudo apt-get install gcc-multilib g++-multilib
+
+nasm -f elf32 start.S
+gcc -m32 -c kernel.c
+ld -T linker.script -m32 -m elf_i386 -o kernel start.o kernel.o e1000.o irq.o pci.o util.o
+
+target remote localhost:1234
+qemu-system-x86_64 -s -S -m 32 -hda ../bochs-2.6.9/hd60M.img  -net nic,model=rtl8139 -s支持远程gdb调试，-S暂停虚拟机执行
+gcc -m32 -c -fno-stack-protector -fno-builtin *.c
+gcc -m32 -c -fno-stack-protector *.c
+ld -T linker.script -m32 -m elf_i386 -o kernel start.o kernel.o 8139.o irq.o pci.o util.o util2.o print.o lib.o
