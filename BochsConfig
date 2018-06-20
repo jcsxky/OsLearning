@@ -1,0 +1,13 @@
+megs:32
+romimage: file=/home/youde/GitLearning/bochs-2.6.9/bios/BIOS-bochs-latest
+vgaromimage: file=/home/youde/GitLearning/bochs-2.6.9/bios/VGABIOS-lgpl-latest
+#floppya: image="a.img", status=inserted
+#floppyb: image="pm.img", status=inserted
+ata0: enabled=1, ioaddr1=0x1f0, ioaddr2=0x3f0, irq=14
+ata0-master: type=disk, path="hd60M.img", mode=flat
+boot: disk
+pci: enabled=1, chipset=i440fx, slot1=ne2k
+ne2k: ioaddr=0x300, irq=11, mac=b0:c4:20:00:00:00, ethmod=linux, ethdev=ens33
+log: bochsout.txt
+mouse: enabled=1
+keyboard: keymap=/home/youde/GitLearning/bochs-2.6.9/gui/keymaps/x11-pc-us.map

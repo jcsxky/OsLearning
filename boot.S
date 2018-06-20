@@ -137,6 +137,7 @@ code_test_interrupt:
 	;inc	byte [gs:((80 * 0 + 70) * 2)]	; 屏幕第 0 行, 第 70 列。
 	mov	al, 20h
 	out	20h, al				; 发送 EOI
+	out 0A0h, al
 	iretd
 	;jmp $
 
@@ -144,21 +145,21 @@ code_test_interrupt:
 ALIGN	32
 [bits	32]
 stack_ring3:
-	times 0x400 db 0
+	times 200 db 0
 	top_of_stack_ring3	equ	$-stack_ring3-1
 	stack_ring3_len equ $-stack_ring3
 
 ALIGN	32
 [bits	32]
 stack_ring0_test_gate:
-	times 0x200 db 0
+	times 200 db 0
 	top_of_stack_ring0_test_gate	equ	$-stack_ring0_test_gate-1
 	stack_ring0_test_gate_len equ $-stack_ring0_test_gate
 
 ALIGN	32
 [bits	32]
 stack_ring0:
-	times 200 db 0
+	times 0x1000 db 0
 	top_of_stack_ring0	equ	$-stack_ring0-1
 	stack_ring0_len equ $-stack_ring0
 
@@ -267,7 +268,7 @@ idt_init:
 	mov [idt_ptr+2],eax
 	mov ax,idt_len-1
 	mov [idt_ptr],ax
-	;cli
+	cli
 	lidt [idt_ptr]
 	mov eax,init_8259a
 	mov [gdt_call_far],ax
@@ -275,16 +276,16 @@ idt_init:
 	mov [gdt_call_far+6],ax
 	call gdt_call_far_selector:0
 
-	mov eax,code_test_interrupt
-	mov [system_call],ax
-	shr eax,16
-	mov [system_call+6],ax
+	;mov eax,code_test_interrupt
+	;mov [system_call],ax
+	;shr eax,16
+	;mov [system_call+6],ax
 
 	;测试时钟中断
-	mov eax,code_test_interrupt
-	mov [idt_label+256],ax
-	shr eax,16
-	mov [idt_label+256+6],ax
+	;mov eax,code_test_interrupt
+	;mov [idt_label+256],ax
+	;shr eax,16
+	;mov [idt_label+256+6],ax
 	;测试分页
 	;在分页之前代码运行在物理地址0x900-0x7bff之内，但是分页之后cpu需要根据cr3寄存器的值进行地址转换，gdt的基址
 	;要设置为0xc0000000，这样就导致没有一个合适的时机来设置这个值。设置在分页之前代码访问的段基址就不对，设置在
@@ -338,7 +339,7 @@ init_pte:
 	;此时cpu处于ring3
 	;jmp $
 
-;加载内核到0x1e00处
+;加载内核到0x7e00处
 kernel_init:
 	mov dx, [0x7e00+42]
 	mov ebx,[0x7e00+28]
@@ -375,21 +376,21 @@ mem_cpy:
 ALIGN	32
 [BITS	32]
 idt_label:
-	%rep 32
+	%rep 11
 		dd 0x00080000
 		dd 0x0000ee00
 	%endrep
-	tick_interrupt:
+	net_interrupt1:
 		dd 0x00580000
 		dd 0x0000ee00
-	%rep 95
-		dd 0x00080000
-		dd 0x0000ee00
-	%endrep
-	system_call:
-		dd 0x00400000
-		dd 0x0000ee00
-	%rep 127
+	;%rep 86
+	;	dd 0x00080000
+	;	dd 0x0000ee00
+	;%endrep
+	;system_call:
+	;	dd 0x00400000
+	;	dd 0x0000ee00
+	%rep 244
 		dd 0x00080000
 		dd 0x0000ee00
 	%endrep
@@ -412,9 +413,9 @@ init_8259a:
 	mov	al, 001h
 	out	021h, al	; 主8259, ICW4.
 	out	0A1h, al	; 从8259, ICW4.
-	mov	al, 11111110b	; 仅仅开启定时器中断
+	mov	al, 11111011b	; 仅仅开启定时器中断
 	;mov	al, 11111111b	; 屏蔽主8259所有中断
 	out	021h, al	; 主8259, OCW1.
-	mov	al, 11111111b	; 屏蔽从8259所有中断
+	mov	al, 11111101b	; 屏蔽从8259所有中断
 	out	0A1h, al	; 从8259, OCW1.
 	retf

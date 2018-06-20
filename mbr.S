@@ -11,13 +11,13 @@ code_start:
 	push 0x2;开始读取的扇区编号
 	push 0x0
 	push 0x900;读取的数据放置于内存的开始地址
-	push 0xa;读取扇区的个数
+	push 55;读取扇区的个数
 	call read_disk
 	push 0x0
 	push 0x20
 	push 0x0
 	push 0x7e00
-	push 0x14
+	push 35
 	call read_disk
 	jmp 0x900
 ;int* read_disk(short section_num,short* start_addr,short start_section)
@@ -56,15 +56,26 @@ not_ready:
 	jnz not_ready
 	mov ax,[bx+2]
 	mov dx, 256
-	mul dx;mul汇编指令，默认乘以ax，结果放在ax中
+	mul edx;mul汇编指令，默认乘以ax，结果放在ax中
 	xor ecx,ecx
-	mov cx, ax
+	mov ecx, eax
 	mov dx, 0x1f0
 	mov ebx,[bx+4]
 go_on_read:
 	in ax,dx
 	mov [ebx],ax;读取的内容从bx处开始存放
 	add ebx,2
+	cmp ebx,0x10000
+	jz .equal
+	jmp .not_equal
+.equal:
+	mov ebx,0x0
+	push ax
+	mov ax,ds
+	add ax,0x1000
+	mov ds,ax
+	pop ax
+.not_equal:
 	loop go_on_read;loop指令，cx存放循环次数
 	ret
 	times 510-($-$$) db 0
